@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Observatoire International GMA — Capital Vivant</title>
+  <link rel="stylesheet" href="css/style.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+  <link rel="icon" href="assets/logo.png">
+  <style>
+    body { background:#f1f5f9; }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="header-inner">
+    <div class="brand">
+      <img src="assets/logo.png" alt="GMA">
+      <div class="brand-text" data-i18n="brand">GMA — Living Capital Observatory</div>
+    </div>
+    <div class="lang-switch">
+      <button data-lang="fr" class="active" onclick="setLang('fr')">FR</button>
+      <button data-lang="en" onclick="setLang('en')">EN</button>
+    </div>
+  </div>
+</header>
+
+<nav>
+  <div class="nav-inner">
+    <button data-page="accueil" class="active" onclick="showPage('accueil')" data-i18n="nav_home">Accueil</button>
+    <button data-page="presentation" onclick="showPage('presentation')" data-i18n="nav_pres">Présentation</button>
+    <button data-page="formules" onclick="showPage('formules')" data-i18n="nav_formulas">Formules</button>
+    <button data-page="mesures" onclick="showPage('mesures')" data-i18n="nav_indices">Indices</button>
+    <button data-page="carte" onclick="showPage('carte')" data-i18n="nav_map">Carte SIG</button>
+    <button data-page="calculateur" onclick="showPage('calculateur')" data-i18n="nav_calc">Calculateur BRₘ</button>
+    <button data-page="delphi" onclick="showPage('delphi')" data-i18n="nav_delphi">Delphi</button>
+    <button data-page="contact" onclick="showPage('contact')" data-i18n="nav_contact">Contact</button>
+  </div>
+</nav>
+
+<main>
+
+<!-- ACCUEIL -->
+<section id="accueil" class="page active">
+  <div class="hero-wrap">
+    <div class="hero-stage">
+      <div class="hero-copy">
+        <h1 class="hero-title-main"><span data-i18n="hero_title_top">Observatoire International GMA</span><span data-i18n="hero_title_bottom">Living Capital</span></h1>
+        <img src="assets/logo.png" alt="Global Mesology Alert" class="hero-logo">
+        <div class="hero-brandline">GLOBAL MESOLOGY ALERT</div>
+        <div class="hero-sub" data-i18n="hero_sub">CAPITAL VIVANT · SURVEILLANCE · ANALYSE · PROTECTION</div>
+        <div class="hero-actions">
+          <button class="cta" onclick="showPage('calculateur')" data-i18n="cta_calc">Calculer BRₘ →</button>
+          <button class="cta-outline" onclick="showPage('delphi')" data-i18n="cta_delphi">Contribuer bénévolement</button>
+          <button class="cta-outline" onclick="showPage('carte')" data-i18n="cta_map">Suivi des sites</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div style="max-width:1040px;margin:28px auto 0;padding:0 20px;">
+    <div class="stats-row">
+      <div class="stat-box"><div class="n">10</div><div class="l" data-i18n="stat1">Sites formalisés</div></div>
+      <div class="stat-box"><div class="n">15</div><div class="l" data-i18n="stat2">Sites à valider</div></div>
+      <div class="stat-box"><div class="n" id="hero-max-brm">5.13</div><div class="l" data-i18n="stat3">BRₘ max (El Bayadh–Djelfa)</div></div>
+      <div class="stat-box"><div class="n">1.20</div><div class="l" data-i18n="stat4">Seuil heuristique</div></div>
+    </div>
+  </div>
+  <div class="home-dashboard container">
+    <div class="section-kicker" data-i18n="home_kicker">GMA · lecture rapide</div>
+    <div class="home-grid">
+      <article class="dashboard-card dashboard-lead">
+        <div class="eyebrow" data-i18n="home_operational">CADRE OPÉRATIONNEL</div>
+        <h2 data-i18n="home_concept">Du concept au signal territorial</h2>
+        <p data-i18n="home_concept_text">Le site ne présente pas seulement le BRₘ : il montre comment passer de la pression et de la résilience à une décision d’investigation, puis à une validation experte.</p>
+        <div class="workflow-line">
+          <span data-i18n="home_step1">1. Observer</span><i>→</i><span data-i18n="home_step2">2. Calculer</span><i>→</i><span data-i18n="home_step3">3. Comparer</span><i>→</i><span data-i18n="home_step4">4. Valider</span>
+        </div>
+      </article>
+      <article class="dashboard-card">
+        <div class="eyebrow" data-i18n="home_data_status">STATUT DES DONNÉES</div>
+        <h3 data-i18n="home_poc">Preuve de concept</h3>
+        <div class="status-list">
+          <div><span data-i18n="home_formal_sites">Sites formalisés</span><strong>10</strong></div>
+          <div><span data-i18n="home_priority_candidates">Sites à valider</span><strong>15</strong></div>
+          <div><span data-i18n="home_illustrative">Ensemble du catalogue</span><strong>25</strong></div>
+          <div><span data-i18n="home_external_calibration">Calibration externe</span><strong data-i18n="home_to_conduct">À conduire</strong></div>
+        </div>
+      </article>
+      <article class="dashboard-card">
+        <div class="eyebrow" data-i18n="home_interpretation">INTERPRÉTATION</div>
+        <h3 data-i18n="home_signal_not_verdict">Le BRₘ est un signal, pas un verdict</h3>
+        <p class="small-note" data-i18n="home_signal_text">La version BRₘ⁰ est exploratoire. Le franchissement d’un seuil sert à prioriser l’analyse et ne remplace ni expertise locale, ni protocole statistique, ni validation indépendante.</p>
+      </article>
+    </div>
+  </div>
+</section>
+
+<!-- PRÉSENTATION -->
+<section id="presentation" class="page">
+  <h2 data-i18n="pres_title">Présentation de l’Observatoire</h2>
+
+  <div class="card">
+    <p data-i18n="pres_p1">L’Observatoire International GMA (Global Mesological Alert) est une plateforme dédiée à la détection et à la gestion des ruptures écologiques et institutionnelles. Il s’appuie sur le concept de Capital Vivant et sur l’écologie opérationnelle.</p>
+    <p data-i18n="pres_p2">Le Capital Vivant désigne l’ensemble des infrastructures critiques de subsistence — biodiversité, sols, eau et savoirs traditionnels associés — sans lesquelles la viabilité des territoires et la dignité de leurs habitants ne peuvent être assurées. L’Observatoire transforme cette intuition en un cadre de diagnostic mesurable.</p>
+    <p data-i18n="pres_p3">Le système d’alerte mésologique globale (GMA) propose un signal heuristique, l’indice de rupture mésologique (BRₘ), conçu pour prioriser l’investigation et structurer le jugement expert. La version actuelle (BRₘ⁰) est exploratoire. La version calibrée (BRₘ★) est l’objet du protocole Delphi n=20 en cours de déploiement.</p>
+    <p data-i18n="pres_p4">L’Observatoire s’adresse aux chercheurs, gestionnaires de territoires et experts volontaires souhaitant contribuer à la validation empirique du cadre sur un ensemble de sites prioritaires (Méditerranée, Afrique du Nord, et cas internationaux de référence).</p>
+  </div>
+
+  <div class="card">
+    <h3 data-i18n="book_title">Ouvrage de référence</h3>
+    <p><strong>Living Capital: Operational Ecology and the Global Mesological Alert System</strong><br>
+    <span data-i18n="book_subtitle">From Mediterranean Lessons to an Exploratory Framework for Territorial Resilience</span></p>
+    <p>Mourad Ahmim, 2026<br>
+    DOI Concept : <a href="https://doi.org/10.5281/zenodo.22391967" target="_blank" rel="noopener noreferrer">10.5281/zenodo.22391967</a><br>
+    DOI Livre v2 (13 Sep 2026) : <a href="https://doi.org/10.5281/zenodo.22738126" target="_blank" rel="noopener noreferrer">10.5281/zenodo.22738126</a><br>
+    DOI Baseline Anchors v1 (13 Sep 2026) : <a href="https://doi.org/10.5281/zenodo.22738208" target="_blank" rel="noopener noreferrer">10.5281/zenodo.22738208</a><br>
+    ORCID : <a href="https://orcid.org/0000-0002-5577-9336" target="_blank" rel="noopener noreferrer">0000-0002-5577-9336</a><br>
+    Licence : CC BY-NC-SA 4.0 + CC-BY 4.0 / CC0</p>
+  </div>
+
+  <div class="card">
+    <h3 data-i18n="author_title">L’auteur</h3>
+    <div class="author-block">
+      <img src="assets/author.jpg" alt="Mourad Ahmim">
+      <div class="author-bio">
+        <h3>Mourad Ahmim</h3>
+        <p data-i18n="author_bio">Chercheur en écologie opérationnelle et mésologie. Travaux centrés sur les systèmes socio-écologiques méditerranéens et nord-africains, la résilience territoriale et la formalisation d’outils d’alerte (GMA, BRₘ, médiance de résilience).</p>
+        <p><span data-i18n="contact_orcid">ORCID</span> : <a href="https://orcid.org/0000-0002-5577-9336" target="_blank" rel="noopener noreferrer">0000-0002-5577-9336</a><br>
+        Contact : forestecolo@gmail.com</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3 data-i18n="epistemic_title">Statut épistémique</h3>
+    <p data-i18n="epistemic_text">Ce travail présente un cadre théorique, un appareil d’indices et une preuve de concept empirique (n=10 sites algériens). Il ne constitue pas une validation externe. La calibration formelle (n=20, double notation en aveugle, poids fixés avant ROC) est l’objet de l’appel Delphi en cours.</p>
+  </div>
+</section>
+
+<section id="contact" class="page">
+  <h2 data-i18n="contact_title">Contact</h2>
+  <div class="card">
+    <p><strong data-i18n="contact_email">Email</strong> : forestecolo@gmail.com</p>
+    <p><strong data-i18n="contact_orcid">ORCID</strong> : <a href="https://orcid.org/0000-0002-5577-9336" target="_blank" rel="noopener noreferrer">0000-0002-5577-9336</a></p>
+    <p><strong>DOI Concept</strong> : <a href="https://doi.org/10.5281/zenodo.22391967" target="_blank" rel="noopener noreferrer">10.5281/zenodo.22391967</a></p>
+    <p><strong>DOI Livre v2</strong> : <a href="https://doi.org/10.5281/zenodo.22738126" target="_blank" rel="noopener noreferrer">10.5281/zenodo.22738126</a></p>
+    <p><strong>DOI Baseline v1</strong> : <a href="https://doi.org/10.5281/zenodo.22738208" target="_blank" rel="noopener noreferrer">10.5281/zenodo.22738208</a></p>
+    <p data-i18n="license">Licence CC BY-NC-SA 4.0 + CC-BY 4.0 / CC0</p>
+  </div>
+</section>
+
+</main>
+
+<footer>
+  <p data-i18n="footer_copy">© 2026 Observatoire International GMA — Capital Vivant · Mourad Ahmim</p>
+  <p style="margin-top:6px;">
+    <a href="https://doi.org/10.5281/zenodo.22391967" target="_blank">Concept 22391967</a> ·
+    <a href="https://doi.org/10.5281/zenodo.22738126" target="_blank">Livre v2 22738126</a> ·
+    <a href="https://doi.org/10.5281/zenodo.22738208" target="_blank">Baseline 22738208</a> ·
+    <a href="https://orcid.org/0000-0002-5577-9336" target="_blank">ORCID</a>
+  </p>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="js/data.js"></script>
+<script src="js/script.js"></script>
+<div style="text-align:center; margin-top:60px; padding:20px; border-top:1px solid #222; font-size:12px; opacity:0.5; color:#888; font-family:monospace;">● observatoire vivant • <img src="https://visitor-badge.laobi.icu/badge?page_id=cerclevertdz-ai.gma-observatory" style="vertical-align:middle;" alt="visites"> • capital vivant</div>
+</body>
+</html>
