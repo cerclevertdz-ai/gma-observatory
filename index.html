@@ -1,1 +1,751 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Observatoire International GMA — Capital Vivant</title>
+  <link rel="stylesheet" href="css/style.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+  <link rel="icon" href="assets/logo.png">
+  <style>
+    .doi-banner {
+      background: #faf3e8;
+      border: 1px solid rgba(139,90,43,0.12);
+      border-radius: var(--radius, 8px);
+      padding: 18px 20px;
+      margin-bottom: 20px;
+    }
+    .doi-banner h3 {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: #8b5a2b;
+      margin: 0 0 12px 0;
+      font-weight: 700;
+    }
+    .doi-list { display: flex; flex-direction: column; gap: 8px; }
+    .doi-item {
+      display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; font-size: 13.5px;
+    }
+    .doi-label {
+      font-weight: 600; color: #8b5a2b; min-width: 70px; flex-shrink: 0;
+    }
+    .doi-link {
+      color: var(--accent, #1e40af); text-decoration: none;
+      font-family: monospace; font-size: 12.5px;
+    }
+    .doi-link:hover { text-decoration: underline; }
+    .biome-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 10px; margin: 14px 0;
+    }
+    .biome-item {
+      background: var(--white, #fff); border: 1px solid var(--border, #e2e8f0);
+      border-radius: var(--radius, 8px); padding: 14px 16px;
+      display: flex; align-items: flex-start; gap: 10px;
+      transition: box-shadow 0.2s, transform 0.15s;
+    }
+    .biome-item:hover {
+      box-shadow: 0 4px 16px rgba(15,23,42,0.06); transform: translateY(-1px);
+    }
+    .biome-icon { font-size: 1.4rem; line-height: 1; flex-shrink: 0; margin-top: 2px; }
+    .biome-name {
+      font-weight: 600; font-size: 13.5px; color: var(--navy, #0f172a); margin-bottom: 2px;
+    }
+    .biome-desc { font-size: 12px; color: var(--slate-500, #64748b); line-height: 1.4; }
+    .section-kicker {
+      font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase;
+      font-weight: 800; color: var(--slate-500, #64748b); margin-bottom: 6px;
+    }
+    .table-wrap {
+      overflow-x: auto; margin: 12px 0;
+      border-radius: var(--radius, 8px); border: 1px solid var(--border, #e2e8f0);
+    }
+    .table-wrap table {
+      width: 100%; border-collapse: collapse; font-size: 13px; background: var(--white, #fff);
+    }
+    .table-wrap th, .table-wrap td {
+      padding: 10px 12px; text-align: left; border-bottom: 1px solid var(--border, #e2e8f0);
+    }
+    .table-wrap th {
+      background: #f1f5f9; color: var(--navy, #0f172a); font-weight: 600;
+      font-size: 11.5px; text-transform: uppercase; letter-spacing: 0.04em;
+    }
+    .table-wrap tr:hover { background: #f8fafc; }
+    .table-wrap td { color: var(--slate-600, #475569); }
+    .table-wrap td:first-child { color: var(--navy, #0f172a); font-weight: 500; }
+    .cta-box {
+      background: var(--navy, #0f172a); color: #fff;
+      border-radius: var(--radius, 8px); padding: 28px 24px;
+      text-align: center; margin: 24px 0;
+    }
+    .cta-box h3 { font-size: 22px; color: #fff; margin-bottom: 10px; }
+    .cta-box p {
+      color: rgba(255,255,255,0.8); max-width: 60ch;
+      margin: 0 auto 16px; font-size: 14px;
+    }
+    .alert {
+      background: #faf3e8; border-left: 3px solid #8b5a2b;
+      border-radius: 0 var(--radius, 8px) var(--radius, 8px) 0;
+      padding: 14px 16px; margin: 14px 0; font-size: 13.5px; color: var(--slate-600, #475569);
+    }
+    .alert strong { color: #8b5a2b; display: block; margin-bottom: 4px; }
+    @media (max-width: 700px) {
+      .doi-item { flex-direction: column; gap: 2px; }
+      .doi-label { min-width: auto; }
+      .biome-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
 
+<header>
+  <div class="header-inner">
+    <div class="brand">
+      <img src="assets/logo.png" alt="GMA">
+      <div class="brand-text" data-i18n="brand">GMA — Living Capital Observatory</div>
+    </div>
+    <div class="lang-switch">
+      <button data-lang="fr" class="active" onclick="setLang('fr')">FR</button>
+      <button data-lang="en" onclick="setLang('en')">EN</button>
+    </div>
+  </div>
+</header>
+
+<nav>
+  <div class="nav-inner">
+    <button data-page="accueil" class="active" onclick="showPage('accueil')" data-i18n="nav_home">Accueil</button>
+    <button data-page="presentation" onclick="showPage('presentation')" data-i18n="nav_pres">Présentation</button>
+    <button data-page="formules" onclick="showPage('formules')" data-i18n="nav_formulas">Formules</button>
+    <button data-page="mesures" onclick="showPage('mesures')" data-i18n="nav_indices">Indices</button>
+    <button data-page="carte" onclick="showPage('carte')" data-i18n="nav_map">Carte SIG</button>
+    <button data-page="calculateur" onclick="showPage('calculateur')" data-i18n="nav_calc">Calculateur BRₘ</button>
+    <button data-page="delphi" onclick="showPage('delphi')" data-i18n="nav_delphi">Delphi</button>
+    <button data-page="contact" onclick="showPage('contact')" data-i18n="nav_contact">Contact</button>
+  </div>
+</nav>
+
+<main>
+
+<!-- ==================== ACCUEIL ==================== -->
+<section id="accueil" class="page active">
+  <div class="hero-wrap">
+    <div class="hero-stage">
+      <div class="hero-copy">
+        <h1 class="hero-title-main"><span data-i18n="hero_title_top">Observatoire International GMA</span><span data-i18n="hero_title_bottom">Living Capital</span></h1>
+        <img src="assets/logo.png" alt="Global Mesology Alert" class="hero-logo">
+        <div class="hero-brandline" data-i18n="hero_kicker">GLOBAL MESOLOGY ALERT</div>
+        <div class="hero-sub" data-i18n="hero_sub">CAPITAL VIVANT · SURVEILLANCE · ANALYSE · PROTECTION</div>
+        <div class="hero-actions">
+          <button class="cta" onclick="showPage('calculateur')" data-i18n="cta_calc">Calculer BRₘ →</button>
+          <button class="cta-outline" onclick="showPage('delphi')" data-i18n="cta_delphi">Contribuer bénévolement</button>
+          <button class="cta-outline" onclick="showPage('carte')" data-i18n="cta_map">Suivi des sites</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div style="max-width:1040px;margin:28px auto 0;padding:0 20px;">
+    <div class="stats-row">
+      <div class="stat-box"><div class="n">10</div><div class="l" data-i18n="stat1">Sites formalisés</div></div>
+      <div class="stat-box"><div class="n">15</div><div class="l" data-i18n="stat2">Sites à valider</div></div>
+      <div class="stat-box"><div class="n" id="hero-max-brm">5.13</div><div class="l" data-i18n="stat3">BRₘ max (El Bayadh–Djelfa)</div></div>
+      <div class="stat-box"><div class="n">1.20</div><div class="l" data-i18n="stat4">Seuil heuristique</div></div>
+    </div>
+  </div>
+
+  <div class="container" style="margin-top:28px;">
+    <div class="doi-banner">
+      <h3 data-i18n="doi_banner_title">Publications et données de référence (Zenodo)</h3>
+      <div class="doi-list">
+        <div class="doi-item">
+          <span class="doi-label" data-i18n="doi_concept_label">Concept</span>
+          <span data-i18n="doi_concept_desc">Living Capital — Concept initial</span>
+          <a class="doi-link" href="https://doi.org/10.5281/zenodo.22391967" target="_blank">10.5281/zenodo.22391967</a>
+        </div>
+        <div class="doi-item">
+          <span class="doi-label" data-i18n="doi_book_label">Livre v2</span>
+          <span data-i18n="doi_book_desc">Living Capital v119 (13 Sep 2026)</span>
+          <a class="doi-link" href="https://doi.org/10.5281/zenodo.22738126" target="_blank">10.5281/zenodo.22738126</a>
+        </div>
+        <div class="doi-item">
+          <span class="doi-label" data-i18n="doi_baseline_label">Baselines</span>
+          <span data-i18n="doi_baseline_desc">GMA Biome Baselines v1 (13 Sep 2026)</span>
+          <a class="doi-link" href="https://doi.org/10.5281/zenodo.22738208" target="_blank">10.5281/zenodo.22738208</a>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="section-kicker" data-i18n="home_kicker">GMA · lecture rapide</div>
+      <h2 data-i18n="home_concept">Du concept au signal territorial</h2>
+      <p data-i18n="home_concept_text">Le site ne présente pas seulement le BRₘ : il montre comment passer de la pression et de la résilience à une décision d’investigation, puis à une validation experte.</p>
+      <div class="workflow-line" style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:14px 0;color:var(--slate-700);font-size:12px;font-weight:700;">
+        <span style="padding:6px 9px;background:#f1f5f9;border-radius:999px;" data-i18n="home_step1">1. Observer</span>
+        <i style="color:var(--slate-400);font-style:normal;">→</i>
+        <span style="padding:6px 9px;background:#f1f5f9;border-radius:999px;" data-i18n="home_step2">2. Calculer</span>
+        <i style="color:var(--slate-400);font-style:normal;">→</i>
+        <span style="padding:6px 9px;background:#f1f5f9;border-radius:999px;" data-i18n="home_step3">3. Comparer</span>
+        <i style="color:var(--slate-400);font-style:normal;">→</i>
+        <span style="padding:6px 9px;background:#f1f5f9;border-radius:999px;" data-i18n="home_step4">4. Valider</span>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="section-kicker" data-i18n="home_data_status">STATUT DES DONNÉES</div>
+      <h2 data-i18n="home_poc">Preuve de concept</h2>
+      <div class="status-list" style="margin-top:12px;">
+        <div style="display:flex;justify-content:space-between;gap:12px;padding:9px 0;border-bottom:1px solid var(--border);font-size:13px;">
+          <span data-i18n="home_formal_sites">Sites formalisés</span><strong>10</strong>
+        </div>
+        <div style="display:flex;justify-content:space-between;gap:12px;padding:9px 0;border-bottom:1px solid var(--border);font-size:13px;">
+          <span data-i18n="home_priority_candidates">Sites à valider</span><strong>15</strong>
+        </div>
+        <div style="display:flex;justify-content:space-between;gap:12px;padding:9px 0;border-bottom:1px solid var(--border);font-size:13px;">
+          <span data-i18n="home_illustrative">Ensemble du catalogue</span><strong>25</strong>
+        </div>
+        <div style="display:flex;justify-content:space-between;gap:12px;padding:9px 0;font-size:13px;">
+          <span data-i18n="home_external_calibration">Calibration externe</span><strong data-i18n="home_to_conduct">À conduire</strong>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="section-kicker" data-i18n="home_interpretation">INTERPRÉTATION</div>
+      <h2 data-i18n="home_signal_not_verdict">Le BRₘ est un signal, pas un verdict</h2>
+      <p data-i18n="home_signal_text">La version BRₘ⁰ est exploratoire. Le franchissement d’un seuil sert à prioriser l’analyse et ne remplace ni expertise locale, ni protocole statistique, ni validation indépendante.</p>
+    </div>
+  </div>
+</section>
+<!-- ==================== PRÉSENTATION ==================== -->
+<section id="presentation" class="page">
+  <div class="container">
+    <h2 data-i18n="pres_title">Présentation de l’Observatoire</h2>
+
+    <div class="doi-banner">
+      <h3 data-i18n="doi_banner_title">Publications et données de référence (Zenodo)</h3>
+      <div class="doi-list">
+        <div class="doi-item">
+          <span class="doi-label" data-i18n="doi_concept_label">Concept</span>
+          <span data-i18n="doi_concept_desc">Living Capital — Concept initial</span>
+          <a class="doi-link" href="https://doi.org/10.5281/zenodo.22391967" target="_blank">10.5281/zenodo.22391967</a>
+        </div>
+        <div class="doi-item">
+          <span class="doi-label" data-i18n="doi_book_label">Livre v2</span>
+          <span data-i18n="doi_book_desc">Living Capital v119 (13 Sep 2026)</span>
+          <a class="doi-link" href="https://doi.org/10.5281/zenodo.22738126" target="_blank">10.5281/zenodo.22738126</a>
+        </div>
+        <div class="doi-item">
+          <span class="doi-label" data-i18n="doi_baseline_label">Baselines</span>
+          <span data-i18n="doi_baseline_desc">GMA Biome Baselines v1 (13 Sep 2026) — 9 biomes</span>
+          <a class="doi-link" href="https://doi.org/10.5281/zenodo.22738208" target="_blank">10.5281/zenodo.22738208</a>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <p data-i18n="pres_p1">L’Observatoire International GMA (Global Mesological Alert) est une plateforme dédiée à la détection et à la gestion des ruptures écologiques et institutionnelles. Il s’appuie sur le concept de Capital Vivant et sur l’écologie opérationnelle.</p>
+      <p data-i18n="pres_p2">Le Capital Vivant désigne l’ensemble des infrastructures critiques de subsistance — biodiversité, sols, eau et savoirs traditionnels associés — sans lesquelles la viabilité des territoires et la dignité de leurs habitants ne peuvent être assurées. L’Observatoire transforme cette intuition en un cadre de diagnostic mesurable.</p>
+      <p data-i18n="pres_p3">Le système d’alerte mésologique globale (GMA) propose un signal heuristique, l’indice de rupture mésologique (BRₘ), conçu pour prioriser l’investigation et structurer le jugement expert. La version actuelle (BRₘ⁰) est exploratoire. La version calibrée (BRₘ★) est l’objet du protocole Delphi n=20 en cours de déploiement.</p>
+      <p data-i18n="pres_p4">L’Observatoire s’adresse aux chercheurs, gestionnaires de territoires et experts volontaires souhaitant contribuer à la validation empirique du cadre sur des sites prioritaires méditerranéens, nord-africains et internationaux.</p>
+    </div>
+
+    <div class="card">
+      <h3 data-i18n="book_title">Ouvrage de référence</h3>
+      <p><strong>Living Capital: Operational Ecology and the Global Mesological Alert System</strong><br>
+      <em data-i18n="book_subtitle">From Mediterranean Lessons to an Exploratory Framework for Territorial Resilience</em></p>
+      <p style="font-size:13.5px;color:var(--slate-600);">
+        Mourad Ahmim, 2026<br>
+        DOI Concept : <a href="https://doi.org/10.5281/zenodo.22391967" target="_blank">10.5281/zenodo.22391967</a><br>
+        DOI Livre v2 : <a href="https://doi.org/10.5281/zenodo.22738126" target="_blank">10.5281/zenodo.22738126</a><br>
+        DOI Baselines v1 : <a href="https://doi.org/10.5281/zenodo.22738208" target="_blank">10.5281/zenodo.22738208</a><br>
+        ORCID : <a href="https://orcid.org/0000-0002-5577-9336" target="_blank">0000-0002-5577-9336</a><br>
+        Licence : CC BY-NC-SA 4.0 (Livre) + CC-BY 4.0 / CC0 (Baseline)
+      </p>
+    </div>
+
+    <div class="card author-block">
+      <img src="assets/author.jpg" alt="Mourad Ahmim">
+      <div class="author-bio">
+        <h3 data-i18n="author_title">L’auteur</h3>
+        <p><strong>Mourad Ahmim</strong></p>
+        <p data-i18n="author_bio">Chercheur en écologie opérationnelle et mésologie. Travaux centrés sur les systèmes socio-écologiques méditerranéens et nord-africains, la résilience territoriale et la formalisation d’outils d’alerte (GMA, BRₘ, médiance de résilience).</p>
+        <p style="font-size:13px;">
+          <span data-i18n="contact_orcid">ORCID</span> : <a href="https://orcid.org/0000-0002-5577-9336" target="_blank">0000-0002-5577-9336</a><br>
+          Contact : <a href="/cdn-cgi/l/email-protection#4a2c25382f393e2f292526250a2d272b232664292527"><span class="__cf_email__" data-cfemail="2b4d44594e585f4e484447446b4c464a424705484446">[email&#160;protected]</span></a>
+        </p>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3 data-i18n="epistemic_title">Statut épistémique</h3>
+      <p data-i18n="epistemic_text">Ce travail présente un cadre théorique, un système d’indices et une preuve de concept empirique (n=10 sites algériens). Il ne constitue pas une validation externe. La calibration formelle (n=20, double notation en aveugle, poids fixés avant ROC) relève du protocole Delphi en cours.</p>
+    </div>
+
+    <div class="card">
+      <div class="section-kicker" data-i18n="biome_section_kicker">Document technique · Zenodo DOI 10.5281/zenodo.22738208</div>
+      <h2 data-i18n="biome_title">Biome Baselines — Ancres de calibration trans-biomes</h2>
+      <p data-i18n="biome_intro">Le document GMA Biome Baselines fournit les ancres de référence (x_ref, x_floor, q_sust) pour 9 biomes majeurs, permettant de rendre le BRₘ calculable au-delà du périmètre méditerranéen/nord-africain initial. Chaque ancre est une hypothèse opérationnelle soumise au protocole A.9.</p>
+
+      <div class="biome-grid">
+        <div class="biome-item">
+          <div class="biome-icon">🌲</div>
+          <div>
+            <div class="biome-name" data-i18n="biome_mfm_name">Forêt méditerranéenne et matorral</div>
+            <div class="biome-desc" data-i18n="biome_mfm_desc">Tell, Californie, Chili — Feu, pâturage, fragmentation</div>
+          </div>
+        </div>
+        <div class="biome-item">
+          <div class="biome-icon">🌾</div>
+          <div>
+            <div class="biome-name" data-i18n="biome_sas_name">Steppe aride et semi-désertique</div>
+            <div class="biome-desc" data-i18n="biome_sas_desc">Hauts plateaux, Sahel, Asie centrale — Surcharge pastorale, déclin piézométrique</div>
+          </div>
+        </div>
+        <div class="biome-item">
+          <div class="biome-icon">🦩</div>
+          <div>
+            <div class="biome-name" data-i18n="biome_zhl_name">Zone humide et lagune côtière</div>
+            <div class="biome-desc" data-i18n="biome_zhl_desc">Ramsar, estuaires — Prélèvements, nutriments, conversion</div>
+          </div>
+        </div>
+        <div class="biome-item">
+          <div class="biome-icon">🏔️</div>
+          <div>
+            <div class="biome-name" data-i18n="biome_mbg_name">Montagne et bassin versant glaciaire</div>
+            <div class="biome-desc" data-i18n="biome_mbg_desc">Himalaya, Andes, Haut Atlas — Abstraction glaciaire, mines, dégradation alpine</div>
+          </div>
+        </div>
+        <div class="biome-item">
+          <div class="biome-icon">🏙️</div>
+          <div>
+            <div class="biome-name" data-i18n="biome_mcp_name">Mégalopole côtière et péri-urbain</div>
+            <div class="biome-desc" data-i18n="biome_mcp_desc">Étanchéité, îlot de chaleur, eau non rentable, vulnérabilité thermique</div>
+          </div>
+        </div>
+        <div class="biome-item">
+          <div class="biome-icon">🌴</div>
+          <div>
+            <div class="biome-name" data-i18n="biome_osf_name">Oasis saharienne et foggara</div>
+            <div class="biome-desc" data-i18n="biome_osf_desc">SASS, foggaras — Surexploitation aquifère, déclin du palmier, forage profond</div>
+          </div>
+        </div>
+        <div class="biome-item">
+          <div class="biome-icon">🌳</div>
+          <div>
+            <div class="biome-name" data-i18n="biome_fth_name">Forêt tropicale humide</div>
+            <div class="biome-desc" data-i18n="biome_fth_desc">Amazonie, Congo, Asie du Sud-Est — Déforestation, chasse, proximité du tipping point</div>
+          </div>
+        </div>
+        <div class="biome-item">
+          <div class="biome-icon">🦁</div>
+          <div>
+            <div class="biome-name" data-i18n="biome_sbt_name">Savane et broussaille tropicale</div>
+            <div class="biome-desc" data-i18n="biome_sbt_desc">Afrique de l'Est, Cerrado, N. Australie — Changement du couvert ligneux, régime du feu</div>
+          </div>
+        </div>
+        <div class="biome-item">
+          <div class="biome-icon">🌊</div>
+          <div>
+            <div class="biome-name" data-i18n="biome_dft_name">Delta fluvial tropical</div>
+            <div class="biome-desc" data-i18n="biome_dft_desc">Mékong, Gange, Niger, Nil — Piégeage sédimentaire, subsidence, intrusion saline</div>
+          </div>
+        </div>
+      </div>
+
+      <h4 style="margin-top:18px;font-size:14px;" data-i18n="biome_rules_title">Règles de translation inter-biomes</h4>
+      <ul style="font-size:13px;color:var(--slate-600);padding-left:18px;margin:8px 0;">
+        <li data-i18n="biome_rule1"><strong>Biome dominant :</strong> le site est classé par le biome couvrant &gt;60% du périmètre. Ses baselines sont utilisées pour toutes les transformations.</li>
+        <li data-i18n="biome_rule2"><strong>Biome mixte :</strong> si aucun biome ne dépasse 60%, calculer le BRₘ pour chaque biome avec ses baselines, puis moyenne pondérée par surface.</li>
+        <li data-i18n="biome_rule3"><strong>Zonation altitudinale :</strong> en montagne, baselines "Montagne" en amont et baselines du biome aval en contrebas.</li>
+        <li data-i18n="biome_rule4"><strong>Enclave urbaine :</strong> une ville dans un biome forestier ou steppique est évaluée avec deux jeux de baselines (urbain + environnant).</li>
+      </ul>
+      <p style="font-size:12.5px;color:var(--slate-500);margin-top:10px;" data-i18n="biome_reference">
+        <em>Référence : GMA Biome Baselines v1.0, 2026. Texte CC-BY 4.0 | Ancres de données CC0.</em>
+      </p>
+    </div>
+  </div>
+</section>
+<!-- ==================== FORMULES ==================== -->
+<section id="formules" class="page">
+  <div class="container">
+    <h2 data-i18n="formulas_title">Formules et définitions</h2>
+
+    <div class="formula-block">
+      <h3 data-i18n="f1_title">1. Indice de Rupture Mésologique (BRₘ)</h3>
+      <div class="formula">\[ BR_m = \left( rac{\Delta P}{R} ight) 	imes \left( 1 + \sum_i \mu_i \cdot v_i ight) \]</div>
+      <p data-i18n="f1_desc">Signal heuristique de déséquilibre entre pression anthropique et résilience écologique. Le seuil ≈ 1,20 est provisoire et ne constitue pas un seuil réglementaire.</p>
+      <ul>
+        <li data-i18n="f1_dp_text">ΔP — Pression anthropique relative normalisée [0,1]</li>
+        <li data-i18n="f1_r_text">R — Résilience écologique normalisée [0,1], avec R &gt; 0 dans le calcul</li>
+        <li data-i18n="f1_mu_text">μᵢ — Poids de vulnérabilité, à calibrer par Delphi</li>
+        <li data-i18n="f1_vi_text">vᵢ — Intensité observée de la vulnérabilité [0,1]</li>
+      </ul>
+    </div>
+
+    <div class="formula-block">
+      <h3 data-i18n="f2_title">2. BRₘ ajusté</h3>
+      <div class="formula">\[ BR_{m,adj} = BR_m 	imes (1-E(t)) \]</div>
+      <p data-i18n="f2_desc">Le BRₘ ajusté tient compte de la substitution techno-institutionnelle : BRₘ_adj = BRₘ × (1 − E(t)).</p>
+      <ul>
+        <li data-i18n="f2_brm">BRₘ — signal de rupture mésologique avant correction</li>
+        <li data-i18n="f2_et">E(t) — coefficient de substitution techno-institutionnelle [0,1]</li>
+        <li data-i18n="f2_et_def">Part de la stabilité territoriale reposant sur des apports technologiques ou institutionnels externes. Pour l’eau : (volume importé + dessalé + réutilisé) / volume consommé.</li>
+        <li data-i18n="f2_rule">E(t) &gt; 0,70 indique une stabilité fortement soutenue par substitution technologique.</li>
+      </ul>
+    </div>
+
+    <div class="formula-block">
+      <h3 data-i18n="f3_title">3. Trajection τ(t)</h3>
+      <div class="formula">\[ 	au(t) = ho \cdot (B(t) \cdot S(t) \cdot P(t))^{1/3} \]</div>
+      <p data-i18n="f3_desc">La trajection modélise le degré de co-production vivante entre une communauté et son milieu.</p>
+      <ul>
+        <li data-i18n="f3_b">B(t) — composante bio-écologique : intégrité écologique observée [0,1]</li>
+        <li data-i18n="f3_s">S(t) — composante socio-culturelle : vitalité des savoirs et pratiques de gestion [0,1]</li>
+        <li data-i18n="f3_p">P(t) — composante perceptive/existentielle : qualité vécue du milieu, attachement au lieu [0,1]</li>
+        <li data-i18n="f3_rho">ρ — paramètre de couplage : intensité de la co-production active entre communauté et milieu [0,1]</li>
+        <li data-i18n="f3_op">Φ — opérateur d’agrégation non substituable ; moyenne géométrique par défaut</li>
+      </ul>
+    </div>
+
+    <div class="formula-block">
+      <h3 data-i18n="f4_title">4. Indice de Régénération Bioculturelle (BRI)</h3>
+      <div class="formula">\[ BRI_{dyn}(t) = rac{	au(t_2)-	au(t_1)}{t_2-t_1} \]</div>
+      <p data-i18n="f4_desc">Le BRI dynamique suit la vitesse de changement du Capital Vivant entre deux temps d’observation.</p>
+      <ul>
+        <li data-i18n="f4_t1">τ(t₁) — trajection au temps initial</li>
+        <li data-i18n="f4_t2">τ(t₂) — trajection au temps final</li>
+        <li data-i18n="f4_time">t₂ − t₁ — durée de la fenêtre d’observation</li>
+      </ul>
+      <p data-i18n="f4_read">BRI &gt; 0 indique une trajectoire de régénération ; BRI &lt; 0 indique une dégradation. La magnitude doit être interprétée selon la fenêtre d’observation et le référentiel de normalisation.</p>
+    </div>
+
+    <div class="card">
+      <div class="section-kicker" data-i18n="normalisation_kicker">SECTION MÉTHODOLOGIQUE — INDICES</div>
+      <h2 data-i18n="normalisation_title">Paramétrage et normalisation des composantes</h2>
+      <p data-i18n="normalisation_intro">Les indices GMA ne reçoivent pas directement des grandeurs physiques hétérogènes. Les variables brutes sont d’abord normalisées selon une règle déclarée, puis agrégées. Les 10 valeurs maîtresses publiées de la preuve de concept restent des scores de rubrique ; leur re-calcul fonctionnel relève du protocole n=20.</p>
+      <ul style="font-size:13.5px;color:var(--slate-600);padding-left:18px;">
+        <li data-i18n="norm_dp">ΔP Pression anthropique : moyenne pondérée des sous-pressions normalisées. Variables de ratio : transformation logarithmique de l’excès q/q_sust, saturation avec k=5.</li>
+        <li data-i18n="norm_r">R Résilience écologique : score normalisé [0,1] construit sur un référentiel biogéographique explicite ; R doit rester &gt;0 dans BRₘ.</li>
+        <li data-i18n="norm_mu">μᵢ Poids des vulnérabilités : μᵢ≥0 et Σμᵢ=1 par site. Dans BRₘ⁰ ils sont issus d’un jugement expert ; BRₘ★ doit les fixer avant ROC.</li>
+        <li data-i18n="norm_v">vᵢ Intensités de vulnérabilité [0,1] ; les ancres et leur cardinalisation doivent être documentées.</li>
+        <li data-i18n="norm_tau">τ(t)=ρ·(B·S·P)^(1/3), avec B, S, P et ρ normalisés ou bornés dans [0,1].</li>
+        <li data-i18n="norm_bri">BRI_dyn=(τ₂−τ₁)/(t₂−t₁). Deux observations distinctes et une durée explicite sont nécessaires ; aucune valeur n’est inventée quand elles manquent.</li>
+        <li data-i18n="norm_e">E(t) est, pour l’eau, la part de stabilité reposant sur des volumes importés, dessalés ou réutilisés rapportés au volume consommé.</li>
+        <li data-i18n="norm_adj">BRₘ_adj=BRₘ×(1−E(t)). E(t)&gt;0,70 signale, selon la convention actuelle, une stabilité fortement soutenue par substitution technologique.</li>
+      </ul>
+      <p style="font-size:12.5px;color:var(--slate-500);margin-top:10px;" data-i18n="normalisation_source">Référence : Annexe A.2.2 et A.2.2 bis du protocole GMA.</p>
+    </div>
+
+    <div class="card">
+      <h3 data-i18n="norm_details_title">Détails des fonctions de normalisation</h3>
+      <div style="display:grid;gap:10px;margin-top:10px;">
+        <div style="background:#f8fafc;border:1px solid var(--border);border-radius:6px;padding:12px;">
+          <strong style="font-size:13px;" data-i18n="norm_family1_title">Famille 1 — Variables bornées</strong>
+          <p style="font-size:13px;margin:6px 0 0;" data-i18n="norm_family1">x̂ = clip((x_ref−x_obs)/(x_ref−x_floor),0,1). Les références sont définies par domaine biogéographique.</p>
+        </div>
+        <div style="background:#f8fafc;border:1px solid var(--border);border-radius:6px;padding:12px;">
+          <strong style="font-size:13px;" data-i18n="norm_family2_title">Famille 2 — Variables de ratio</strong>
+          <p style="font-size:13px;margin:6px 0 0;" data-i18n="norm_family2">x̂ = min(1, ln(1+q/q_sust)/ln(1+k)), avec k=5. La saturation à ×5 correspond à l’ancrage « extrême » du protocole.</p>
+        </div>
+        <div style="background:#f8fafc;border:1px solid var(--border);border-radius:6px;padding:12px;">
+          <strong style="font-size:13px;" data-i18n="norm_aggregation_title">Agrégation de ΔP</strong>
+          <p style="font-size:13px;margin:6px 0 0;" data-i18n="norm_aggregation">ΔP=Σw_k x̂_k, avec Σw_k=1. Un indicateur manquant n’est pas imputé à zéro : les poids sont redistribués sur les indicateurs observés et la substitution est signalée.</p>
+        </div>
+        <div style="background:#f8fafc;border:1px solid var(--border);border-radius:6px;padding:12px;">
+          <strong style="font-size:13px;" data-i18n="norm_examples_title">Exemples fonctionnels publiés</strong>
+          <p style="font-size:13px;margin:6px 0 0;" data-i18n="norm_examples">Souf–M’Zab : 70→116 Hm³/an pour une recharge d’environ 25 Hm³/an donne q/q_sust≈4,6 et x̂≈0,96. Guerbes–Senhadja : NDVI 0,63→0,41 avec x_ref=0,72 et x_floor=0,12 donne x̂≈0,52.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ==================== INDICES (Mesures) ==================== -->
+<section id="mesures" class="page">
+  <div class="container">
+    <h2 data-i18n="indices_title">Calculs complémentaires des indices</h2>
+
+    <div class="card">
+      <h3 data-i18n="tau_calc_title">Trajection τ(t) — calcul direct</h3>
+      <p data-i18n="tau_calc_intro">Lorsque B, S, P et ρ sont disponibles, la trajection peut être calculée directement. Les valeurs préremplies reproduisent le cas de preuve de concept Djurdjura.</p>
+      <div class="form-row" style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:12px;">
+        <div><label data-i18n="indices_label_bt">B(t)</label><input type="number" id="tau-b" step="0.01" min="0" max="1" value="0.55"></div>
+        <div><label data-i18n="indices_label_st">S(t)</label><input type="number" id="tau-s" step="0.01" min="0" max="1" value="0.35"></div>
+        <div><label data-i18n="indices_label_pt">P(t)</label><input type="number" id="tau-p" step="0.01" min="0" max="1" value="0.60"></div>
+        <div><label data-i18n="indices_label_rho">ρ</label><input type="number" id="tau-rho" step="0.01" min="0" max="1" value="0.30"></div>
+      </div>
+      <button class="btn-primary" style="margin-top:12px;" onclick="calcTau()" data-i18n="btn_tau">Calculer τ(t)</button>
+      <div id="tau-result" style="margin-top:14px;background:#f8fafc;border:1px solid var(--border);border-radius:6px;padding:14px;display:none;"></div>
+    </div>
+
+    <div class="card">
+      <h3 data-i18n="bri_calc_title">BRI dynamique — vitesse de changement</h3>
+      <p data-i18n="bri_calc_intro">Deux observations distinctes de la trajection et une durée explicite sont nécessaires. La valeur est une vitesse de changement, pas un niveau absolu.</p>
+      <div class="form-row" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-top:12px;">
+        <div><label data-i18n="indices_label_tau1">τ(t₁)</label><input type="number" id="bri-t1" step="0.001" value="0.15"></div>
+        <div><label data-i18n="indices_label_tau2">τ(t₂)</label><input type="number" id="bri-t2" step="0.001" value="0.20"></div>
+        <div><label data-i18n="indices_label_dt">t₂ − t₁</label><input type="number" id="bri-dt" step="0.1" min="0.1" value="1"></div>
+      </div>
+      <button class="btn-primary" style="margin-top:12px;" onclick="calcBRI()" data-i18n="btn_bri">Calculer le BRI dynamique</button>
+      <div id="bri-result" style="margin-top:14px;background:#f8fafc;border:1px solid var(--border);border-radius:6px;padding:14px;display:none;"></div>
+    </div>
+
+    <div class="card">
+      <h3 data-i18n="et_calc_title">Coefficient E(t) — substitution de l’eau</h3>
+      <p data-i18n="et_calc_intro">Pour l’eau, E(t) rapporte les volumes importé, dessalé et réutilisé au volume consommé. Le résultat est borné à [0,1].</p>
+      <div class="form-row" style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:12px;">
+        <div><label data-i18n="indices_label_imported">Volume importé</label><input type="number" id="et-imp" step="0.1" min="0" value="0"></div>
+        <div><label data-i18n="indices_label_desal">Volume dessalé</label><input type="number" id="et-des" step="0.1" min="0" value="0"></div>
+        <div><label data-i18n="indices_label_reused">Volume réutilisé</label><input type="number" id="et-reu" step="0.1" min="0" value="0"></div>
+        <div><label data-i18n="indices_label_consumed">Volume consommé</label><input type="number" id="et-con" step="0.1" min="0.1" value="1"></div>
+      </div>
+      <button class="btn-primary" style="margin-top:12px;" onclick="calcEt()" data-i18n="btn_et">Calculer E(t)</button>
+      <div id="et-result" style="margin-top:14px;background:#f8fafc;border:1px solid var(--border);border-radius:6px;padding:14px;display:none;"></div>
+    </div>
+
+    <div class="alert">
+      <strong data-i18n="implementation_warning_title">Important</strong>
+      <span data-i18n="implementation_warning">Ces calculs appliquent les équations déclarées. Ils ne transforment pas des estimations en validation empirique. Les valeurs maîtresses de la preuve de concept restent celles de la Table A.0 jusqu’à leur re-calcul selon le protocole.</span>
+    </div>
+  </div>
+</section>
+<!-- ==================== CARTE ==================== -->
+<section id="carte" class="page">
+  <div class="container">
+    <h2 data-i18n="map_title">Carte des sites — Calibration n=20</h2>
+    <p data-i18n="map_desc">10 sites formalisés et 15 sites à valider. Les marqueurs sont colorés par phénotype.</p>
+
+    <div class="filter-bar">
+      <label data-i18n="map_filter_label">Phénotype</label>
+      <button class="active" onclick="filterMap('all')" data-i18n="map_filter_all">Tous</button>
+      <button onclick="filterMap('Rupture')">Rupture</button>
+      <button onclick="filterMap('R\u00e9silience')">Résilience</button>
+      <button onclick="filterMap('Contre-cas')">Contre-cas</button>
+      <button onclick="filterMap('R\u00e9g\u00e9n\u00e9ration')">Régénération</button>
+    </div>
+
+    <div id="map"></div>
+
+    <div class="stats-row" style="margin-top:14px;">
+      <div class="stat-box"><div class="n" id="count-total">25</div><div class="l" data-i18n="map_stat_total">Total</div></div>
+      <div class="stat-box"><div class="n" id="count-conf">10</div><div class="l" data-i18n="map_stat_confirmed">Confirmés</div></div>
+      <div class="stat-box"><div class="n" id="count-pend">15</div><div class="l" data-i18n="map_stat_pending">\u00c0 valider</div></div>
+      <div class="stat-box"><div class="n" id="count-rupture">\u2014</div><div class="l" data-i18n="map_stat_rupture">Rupture</div></div>
+    </div>
+
+    <div class="card" style="margin-top:24px;">
+      <div class="section-kicker" data-i18n="map_catalogue_kicker">Catalogue des sites \u00b7 Table A.0</div>
+      <h3 data-i18n="map_catalogue_title">Sites formalis\u00e9s (n = 10)</h3>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th data-i18n="map_table_header_site">Site</th><th data-i18n="map_table_header_country">Pays</th><th data-i18n="map_table_header_biome">Biome</th><th data-i18n="map_table_header_phenotype">Ph\u00e9notype</th><th data-i18n="map_table_header_brm">BR\u2098\u2070</th><th data-i18n="map_table_header_source">Source</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>Djurdjura</td><td>Alg\u00e9rie</td><td>M\u00e9diterran\u00e9en montagnard</td><td>Rupture</td><td>2.89</td><td>LIVRE103 \u2014 Table A.0</td></tr>
+            <tr><td>Chr\u00e9a\u2013Babors</td><td>Alg\u00e9rie</td><td>M\u00e9diterran\u00e9en montagnard</td><td>Rupture</td><td>2.15</td><td>LIVRE103 \u2014 Table A.0</td></tr>
+            <tr><td>El Bayadh\u2013Djelfa</td><td>Alg\u00e9rie</td><td>Steppe</td><td>Rupture</td><td><strong>5.13</strong></td><td>LIVRE103 \u2014 Table A.0</td></tr>
+            <tr><td>Souf\u2013M'Zab</td><td>Alg\u00e9rie</td><td>Oasis saharienne</td><td>Rupture</td><td>4.86</td><td>LIVRE103 \u2014 Table A.0</td></tr>
+            <tr><td>Guerbes\u2013Senhadja</td><td>Alg\u00e9rie</td><td>Zone humide Ramsar</td><td>Rupture</td><td>2.44</td><td>LIVRE103 \u2014 Table A.0</td></tr>
+            <tr><td>Bainem</td><td>Alg\u00e9rie</td><td>For\u00eat p\u00e9riurbaine</td><td>R\u00e9silience</td><td>0.61</td><td>LIVRE103 \u2014 Table A.0</td></tr>
+            <tr><td>El Kala (c\u0153ur)</td><td>Alg\u00e9rie</td><td>Parc National</td><td>R\u00e9silience</td><td>0.46</td><td>LIVRE103 \u2014 Table A.0</td></tr>
+            <tr><td>Ahaggar</td><td>Alg\u00e9rie</td><td>Saharien montagnard</td><td>R\u00e9silience</td><td>0.26</td><td>LIVRE103 \u2014 Table A.0</td></tr>
+            <tr><td>Yakouren\u2013Akfadou</td><td>Alg\u00e9rie</td><td>For\u00eat de ch\u00eanes</td><td>R\u00e9silience</td><td>0.68</td><td>LIVRE103 \u2014 Table A.0</td></tr>
+            <tr><td>Tassili n'Ajjer</td><td>Alg\u00e9rie</td><td>Sahara</td><td>R\u00e9silience</td><td>0.21</td><td>LIVRE103 \u2014 Table A.0</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p style="font-size:12px;color:var(--slate-500);margin-top:10px;" data-i18n="map_table_note">Les valeurs ma\u00eetresses de la preuve de concept restent celles de la Table A.0 jusqu'\u00e0 leur re-calcul selon le protocole n=20. Les scores publi\u00e9s sont des scores de rubrique exploratoires.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ==================== CALCULATEUR ==================== -->
+<section id="calculateur" class="page">
+  <div class="container">
+    <h2 data-i18n="calc_title">Calculateur BR\u2098</h2>
+
+    <div class="card">
+      <label data-i18n="calc_published_title">Charger une valeur publi\u00e9e</label>
+      <select id="site-select" onchange="loadSite(this.value)">
+        <option value="" data-i18n="calc_published_placeholder">\u2014 S\u00e9lectionner un site formalis\u00e9 \u2014</option>
+      </select>
+      <p style="font-size:12px;color:var(--slate-500);margin-top:4px;" data-i18n="calc_published_note">Valeur de preuve de concept publi\u00e9e.</p>
+    </div>
+
+    <div class="card calc-form">
+      <div class="form-row">
+        <div>
+          <label>\u0394P \u2014 <span data-i18n="f1_dp_text">Pression relative (0\u20131)</span></label>
+          <input type="number" id="calc-dp" step="0.01" min="0" max="1" placeholder="0.00">
+        </div>
+        <div>
+          <label>R \u2014 <span data-i18n="f1_r_text">R\u00e9silience \u00e9cologique (0\u20131)</span></label>
+          <input type="number" id="calc-r" step="0.01" min="0.01" max="1" placeholder="0.00">
+        </div>
+      </div>
+      <div class="form-row" style="margin-top:4px;">
+        <div>
+          <label>E(t) \u2014 <span data-i18n="f2_et">Substitution techno-institutionnelle (optionnel)</span></label>
+          <input type="number" id="calc-et" step="0.01" min="0" max="1" placeholder="0.00">
+        </div>
+        <div></div>
+      </div>
+
+      <h4 style="margin:16px 0 8px;font-size:13.5px;" data-i18n="calc_vuln_title">Vuln\u00e9rabilit\u00e9s (\u03bc \u00d7 v)</h4>
+      <div id="vuln-container">
+        <div class="vuln-row">
+          <input type="text" data-i18n-placeholder="calc_placeholder_vuln_name" placeholder="Nom vuln\u00e9rabilit\u00e9" value="Ramsar / IUCN">
+          <input type="number" step="0.01" min="0" max="1" placeholder="\u03bc" value="0.30">
+          <input type="number" step="0.01" min="0" max="1" placeholder="v" value="0.80">
+          <button onclick="this.parentElement.remove()" style="background:none;border:none;color:var(--slate-400);cursor:pointer;font-size:16px;" data-i18n="btn_remove">\u00d7</button>
+        </div>
+        <div class="vuln-row">
+          <input type="text" data-i18n-placeholder="calc_placeholder_vuln_name" placeholder="Nom vuln\u00e9rabilit\u00e9" value="End\u00e9misme">
+          <input type="number" step="0.01" min="0" max="1" placeholder="\u03bc" value="0.25">
+          <input type="number" step="0.01" min="0" max="1" placeholder="v" value="0.75">
+          <button onclick="this.parentElement.remove()" style="background:none;border:none;color:var(--slate-400);cursor:pointer;font-size:16px;" data-i18n="btn_remove">\u00d7</button>
+        </div>
+        <div class="vuln-row">
+          <input type="text" data-i18n-placeholder="calc_placeholder_vuln_name" placeholder="Nom vuln\u00e9rabilit\u00e9" value="Stress hydrique">
+          <input type="number" step="0.01" min="0" max="1" placeholder="\u03bc" value="0.20">
+          <input type="number" step="0.01" min="0" max="1" placeholder="v" value="0.70">
+          <button onclick="this.parentElement.remove()" style="background:none;border:none;color:var(--slate-400);cursor:pointer;font-size:16px;" data-i18n="btn_remove">\u00d7</button>
+        </div>
+      </div>
+      <button onclick="addVuln()" style="background:none;border:none;color:var(--accent);font-weight:600;font-size:13px;cursor:pointer;padding:6px 0;" data-i18n="calc_add_vuln">+ Ajouter</button>
+
+      <button class="btn-primary" style="margin-top:16px;" onclick="calculateBrm()" data-i18n="btn_calc">Calculer le BR\u2098</button>
+
+      <div class="result-box" id="result-box">
+        <div style="font-size:12px;color:var(--slate-500);margin-bottom:8px;" data-i18n="calc_results_label">R\u00e9sultats</div>
+        <div class="result-grid" id="result-grid"></div>
+        <div id="result-message" style="margin-top:10px;font-size:13px;"></div>
+      </div>
+
+      <p style="font-size:12.5px;color:var(--slate-500);margin-top:14px;" data-i18n="calc_reading">Lecture : BR\u2098 compare la pression relative \u00e0 la r\u00e9silience, puis applique l\u2019amplification li\u00e9e aux vuln\u00e9rabilit\u00e9s. BR\u2098_adj int\u00e8gre E(t). Les valeurs doivent rester interpr\u00e9tables et document\u00e9es.</p>
+    </div>
+  </div>
+</section>
+<!-- ==================== DELPHI ==================== -->
+<section id="delphi" class="page">
+  <div class="container">
+    <h2 data-i18n="delphi_title2">Appel \u00e0 experts volontaires \u2014 Calibration n = 20</h2>
+
+    <div class="card">
+      <h3 data-i18n="delphi_who_title">Qui recherchons-nous ?</h3>
+      <p><span data-i18n="delphi_who_intro">Des experts volontaires (\u00e9cologie, hydrog\u00e9ologie, gouvernance, mod\u00e9lisation, g\u00e9ographie, anthropologie \u00e9cologique) pr\u00eats \u00e0 participer \u00e0 un</span> <strong data-i18n="delphi_protocol_name">protocole Delphi en 3 rounds</strong> <span data-i18n="delphi_who_for">(novembre\u2013d\u00e9cembre 2026) pour :</span></p>
+      <ul style="margin:10px 0 14px 18px; color:var(--slate-600); font-size:14px;">
+        <li data-i18n="delphi_goal1">Calibrer les poids \u03bc\u1d62 des vuln\u00e9rabilit\u00e9s</li>
+        <li data-i18n="delphi_goal2">Valider les sites candidats (n=15)</li>
+        <li data-i18n="delphi_goal3">Affiner les ancres de normalisation par biome (9 biomes de r\u00e9f\u00e9rence)</li>
+      </ul>
+      <p data-i18n="delphi_note">La participation s'inscrit dans le protocole Delphi de calibration. Les modalit\u00e9s et le nombre de tours seront communiqu\u00e9s aux experts s\u00e9lectionn\u00e9s. La lecture pr\u00e9alable du protocole et de l'ouvrage est recommand\u00e9e.</p>
+    </div>
+
+    <div class="alert">
+      <strong data-i18n="delphi_alert_title">Protocole de calibration BR\u2098\u2605</strong>
+      <span data-i18n="delphi_alert_text">Double notation en aveugle, poids fix\u00e9s avant courbe ROC, n=20 experts cibles. La version BR\u2098\u2070 actuelle est exploratoire. La version calibr\u00e9e BR\u2098\u2605 est l'objet du protocole en cours de d\u00e9ploiement.</span>
+    </div>
+
+    <div class="card">
+      <h3 data-i18n="delphi_catalogue_title">Catalogue des sites \u00e0 valider (n = 15)</h3>
+      <p style="font-size:13px;color:var(--slate-600);margin-bottom:12px;" data-i18n="delphi_catalogue_note">Le statut \u00ab \u00c0 VALIDER \u00bb signifie que le site est propos\u00e9 pour validation ind\u00e9pendante ; il ne signifie pas qu'un jugement d\u00e9finitif a d\u00e9j\u00e0 \u00e9t\u00e9 port\u00e9.</p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th data-i18n="map_table_header_site">Site</th><th data-i18n="map_table_header_country">Pays</th><th data-i18n="map_table_header_biome">Biome</th><th data-i18n="map_table_header_phenotype">Ph\u00e9notype</th><th data-i18n="map_table_header_brm">BR\u2098\u2070</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>Segura / Murcia</td><td>Espagne</td><td>M\u00e9diterran\u00e9en semi-aride</td><td>Contre-cas</td><td>1.35</td></tr>
+            <tr><td>Dat\u00e7a\u2013Bozburun</td><td>Turquie</td><td>M\u00e9diterran\u00e9en</td><td>R\u00e9silience</td><td>0.79</td></tr>
+            <tr><td>California Chaparral</td><td>USA</td><td>Chaparral</td><td>Rupture</td><td>1.92</td></tr>
+            <tr><td>Murray\u2013Darling</td><td>Australie</td><td>Bassin fluvial</td><td>Rupture</td><td>2.05</td></tr>
+            <tr><td>Atacama</td><td>Chili</td><td>D\u00e9sert</td><td>R\u00e9silience</td><td>0.41</td></tr>
+            <tr><td>Jourdain / Mer Morte</td><td>Jordanie</td><td>Aride</td><td>Rupture</td><td>2.22</td></tr>
+            <tr><td>Sahel / Maradi</td><td>Niger</td><td>Sah\u00e9lien</td><td>Rupture</td><td>1.78</td></tr>
+            <tr><td>Okavango</td><td>Botswana</td><td>Delta int\u00e9rieur</td><td>R\u00e9silience</td><td>0.58</td></tr>
+            <tr><td>Sanjiangyuan</td><td>Chine</td><td>Hauts plateaux</td><td>Rupture</td><td>1.65</td></tr>
+            <tr><td>Loess Plateau</td><td>Chine</td><td>Loess</td><td>R\u00e9g\u00e9n\u00e9ration</td><td>0.92</td></tr>
+            <tr><td>Sidi Abdellah (Alger)</td><td>Alg\u00e9rie</td><td>P\u00e9riurbain</td><td>Rupture</td><td>\u2014</td></tr>
+            <tr><td>\u00c9tang de Berre</td><td>France</td><td>Lagune m\u00e9diterran\u00e9enne</td><td>Rupture</td><td>1.15</td></tr>
+            <tr><td>Urdaibai</td><td>Espagne</td><td>R\u00e9serve de biosph\u00e8re</td><td>R\u00e9silience</td><td>0.59</td></tr>
+            <tr><td>Aral Sea</td><td>Kazakhstan/Ouzb\u00e9kistan</td><td>Lac endor\u00e9ique</td><td>Rupture</td><td>\u2014</td></tr>
+            <tr><td>Great Barrier Reef</td><td>Australie</td><td>R\u00e9cif corallien</td><td>Rupture</td><td>\u2014</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="cta-box">
+      <h3 data-i18n="delphi_cta_title">Contribuer au protocole Delphi</h3>
+      <p data-i18n="delphi_cta_text">Utilisez le formulaire ci-dessous pour proposer votre expertise ou sugg\u00e9rer un site \u00e0 valider. Un email structur\u00e9 sera pr\u00e9par\u00e9 automatiquement.</p>
+      <form onsubmit="event.preventDefault(); sendDelphiEmail();">
+        <input type="text" id="delphi-name" data-i18n-placeholder="delphi_form_name" placeholder="Nom complet" required>
+        <input type="email" id="delphi-email" data-i18n-placeholder="delphi_form_email" placeholder="Email" required>
+        <input type="text" id="delphi-institution" data-i18n-placeholder="delphi_form_institution" placeholder="Institution / Affiliation">
+        <input type="text" id="delphi-domain" data-i18n-placeholder="delphi_form_domain" placeholder="Domaine d'expertise (ex: hydrog\u00e9ologie, \u00e9cologie, anthropologie)" required>
+        <textarea id="delphi-message" rows="4" data-i18n-placeholder="delphi_form_message" placeholder="Proposition de site \u00e0 valider ou commentaire (optionnel)"></textarea>
+        <button type="submit" class="btn-primary" style="width:auto;padding:10px 22px;" data-i18n="delphi_form_submit">Envoyer la candidature</button>
+      </form>
+    </div>
+  </div>
+</section>
+
+<!-- ==================== CONTACT ==================== -->
+<section id="contact" class="page">
+  <div class="container">
+    <h2 data-i18n="contact_title">Contact</h2>
+
+    <div class="doi-banner">
+      <h3 data-i18n="doi_banner_title">Publications et donn\u00e9es de r\u00e9f\u00e9rence (Zenodo)</h3>
+      <div class="doi-list">
+        <div class="doi-item">
+          <span class="doi-label" data-i18n="doi_concept_label">Concept</span>
+          <a class="doi-link" href="https://doi.org/10.5281/zenodo.22391967" target="_blank">10.5281/zenodo.22391967</a>
+        </div>
+        <div class="doi-item">
+          <span class="doi-label" data-i18n="doi_book_label">Livre v2</span>
+          <a class="doi-link" href="https://doi.org/10.5281/zenodo.22738126" target="_blank">10.5281/zenodo.22738126</a>
+        </div>
+        <div class="doi-item">
+          <span class="doi-label" data-i18n="doi_baseline_label">Baselines</span>
+          <a class="doi-link" href="https://doi.org/10.5281/zenodo.22738208" target="_blank">10.5281/zenodo.22738208</a>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <p><strong data-i18n="contact_email_label">Email</strong> : <a href="/cdn-cgi/l/email-protection#187e776a7d6b6c7d7b777477587f75797174367b7775"><span class="__cf_email__" data-cfemail="ef89809d8a9c9b8a8c808380af88828e8683c18c8082">[email&#160;protected]</span></a></p>
+      <p><strong data-i18n="contact_orcid_label">ORCID</strong> : <a href="https://orcid.org/0000-0002-5577-9336" target="_blank">0000-0002-5577-9336</a></p>
+      <p><strong data-i18n="contact_github_label">GitHub</strong> : <a href="https://github.com/cerclevertdz-ai/gma-observatory" target="_blank">cerclevertdz-ai/gma-observatory</a></p>
+      <p style="margin-top:10px;font-size:13px;color:var(--slate-500);">
+        <span data-i18n="contact_footer">Observatoire International GMA \u2014 Capital Vivant</span><br>
+        Mourad Ahmim, 2026 \u00b7 <span data-i18n="contact_licence">Licence CC BY-NC-SA 4.0</span>
+      </p>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<footer>
+  <p data-i18n="footer_copyright">\u00a9 2026 Observatoire International GMA \u2014 Capital Vivant \u00b7 Mourad Ahmim</p>
+  <p style="margin-top:6px;">
+    <a href="https://doi.org/10.5281/zenodo.22391967" target="_blank">Concept</a> \u00b7
+    <a href="https://doi.org/10.5281/zenodo.22738126" target="_blank">Livre v2</a> \u00b7
+    <a href="https://doi.org/10.5281/zenodo.22738208" target="_blank">Baseline v1</a> \u00b7
+    <a href="https://orcid.org/0000-0002-5577-9336" target="_blank">ORCID</a>
+  </p>
+</footer>
+
+<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="js/data.js"></script>
+<script src="js/script.js"></script>
+</body>
+</html>
